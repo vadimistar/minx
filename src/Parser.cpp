@@ -41,7 +41,7 @@ std::unique_ptr<Expr> Parser::parseExpr() noexcept {
     return parseFloatLiteralExpr();
   default:
     logError(location(), "Unknown expression (starts with %s)",
-             tokenKindAsStr(current().kind));
+             tokenKindAsStr(current().kind).data());
     exit(1);
   }
 }
