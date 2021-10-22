@@ -81,6 +81,21 @@ Token Lexer::getToken() noexcept {
     return createToken(TokenKind::Assign);
   case ';':
     return createToken(TokenKind::Semicolon);
+  case '(':
+    return createToken(TokenKind::LParen);
+  case ')':
+    return createToken(TokenKind::RParen);
+  case '{':
+    return createToken(TokenKind::LBrace);
+  case '}':
+    return createToken(TokenKind::RBrace);
+  case '-':
+    if (next() == '>') {
+      move();
+      return createToken(TokenKind::ThinArrow);
+    }
+    logError(location, "Expected '>' after '-', but got %c", current());
+    exit(1);
   default:
     if (std::isalpha(current())) {
       return createWord();
