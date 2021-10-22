@@ -27,8 +27,15 @@ template <typename ... Args>
 void logError(FileLocation t_loc, const char* t_fmt, Args ... args) {
   std::fprintf(stderr, "%s:%u:%u: Error: ", t_loc.filename.data(), t_loc.line, t_loc.column);
   std::fprintf(stderr, t_fmt, args...);
+  std::fprintf(stderr, "\n");
 }
 
+template <typename ... Args>
+void logWarning(FileLocation t_loc, const char* t_fmt, Args ... args) {
+  std::fprintf(stderr, "%s:%u:%u: Warning: ", t_loc.filename.data(), t_loc.line, t_loc.column);
+  std::fprintf(stderr, t_fmt, args...);
+  std::fprintf(stderr, "\n");
+}
 }
 
 #endif // MINX_FILELOCATION_HPP
