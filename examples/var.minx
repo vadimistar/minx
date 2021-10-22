@@ -1,1 +1,4 @@
-var a int32;
+func main() -> int32 {
+    var a int32 = 10;
+    return 0;
+}
