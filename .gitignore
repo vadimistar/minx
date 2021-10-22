@@ -2,3 +2,6 @@ build/
 .ccls
 Makefile
 cmake-build-debug/
+.ll
+.o
+.out
