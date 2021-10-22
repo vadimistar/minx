@@ -10,6 +10,7 @@
 
 namespace minx {
 std::optional<std::string> readFile(const char* t_fileName);
+void writeFile(const char* t_fileName, std::string_view t_data);
 }
 
 #endif // MINX_IO_HPP

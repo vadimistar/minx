@@ -15,5 +15,10 @@ std::optional<std::string> minx::readFile(const char *t_fileName) {
   file.seekg(0, std::ios::beg);
   std::string bytes(static_cast<std::uint32_t>(fileSize), '\0');
   file.read(bytes.data(), fileSize);
+  bytes.push_back('\0');
   return bytes;
+}
+void minx::writeFile(const char *t_fileName, std::string_view t_data) {
+  std::ofstream file {t_fileName};
+  file << t_data;
 }
