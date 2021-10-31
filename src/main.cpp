@@ -1,7 +1,9 @@
 #include "../include/Io.hpp"
 #include "../include/Lexer.hpp"
+#include "../include/CodeGen.hpp"
 #include <Parser.hpp>
 #include <cassert>
+#include <iostream>
 
 int main(int argc, char **argv) {
   using namespace minx;
@@ -39,6 +41,12 @@ int main(int argc, char **argv) {
   Lexer lexer(argv[1], fileData.value());
   Parser parser(lexer);
   auto unit = parser.parseTranslationUnit();
+  CodeGen gen;
+  unit.accept(gen);
+
+  for (auto &i : gen.data) {
+    std::cout << i << '\n';
+  }
 
   //auto gen { std::make_unique<LLVMGenerator>() };
   //for (auto &i: unit) {
