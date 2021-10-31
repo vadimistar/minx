@@ -11,7 +11,7 @@
 namespace minx {
 
 enum struct TokenKind {
-  Eof, Integer, Float, Word, Assign, Semicolon,
+  Eof, Integer, Float, Word, Assign, Semicolon, Colon,
   LParen, RParen, LBrace, RBrace, ThinArrow, Mul,
 };
 

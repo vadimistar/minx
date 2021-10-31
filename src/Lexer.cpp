@@ -91,6 +91,8 @@ Token Lexer::getToken() noexcept {
     return createToken(TokenKind::RBrace);
   case '*':
     return createToken(TokenKind::Mul);
+  case ':':
+    return createToken(TokenKind::Colon);
   case '-':
     if (next() == '>') {
       move();
