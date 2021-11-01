@@ -5,3 +5,5 @@ cmake-build-debug/
 .ll
 .o
 .out
+.idea
+.vscode
