@@ -31,6 +31,10 @@ std::string_view tokenKindAsStr(TokenKind t) {
     return "'}'";
   case TokenKind::ThinArrow:
     return "'->'";
+  case TokenKind::Mul:
+    return "'*'";
+  case TokenKind::Colon:
+    return "':'";
   default:
     assert(0 && "This kind of token is not handled");
   }

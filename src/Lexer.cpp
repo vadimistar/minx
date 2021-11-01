@@ -34,7 +34,7 @@ Token Lexer::getToken() noexcept {
   const auto skipComments = [this]() {
     if (current() == '/') {
       if (next() == '/') {
-        moveWhile([this] () { return current() != '\n'; });
+        moveWhile([this]() { return current() != '\n'; });
       } else {
         logError(location, "Expected '/' or '*' after '/', but got '%c'",
                  next());
@@ -43,14 +43,14 @@ Token Lexer::getToken() noexcept {
   };
   const auto createToken = [this](TokenKind t_kind) -> Token {
     move();
-    return {t_kind, ""};
+    return {t_kind, "", location};
   };
   const auto createWord = [this]() -> Token {
     std::string t_value;
     for (; std::isalnum(current()) || current() == '_'; move()) {
       t_value.push_back(current());
     }
-    return {TokenKind::Word, t_value};
+    return {TokenKind::Word, t_value, location};
   };
   const auto createNumber = [this]() -> Token {
     std::string t_value;
@@ -64,14 +64,14 @@ Token Lexer::getToken() noexcept {
       t_value.push_back('.');
       move();
       parseDigits();
-      return {TokenKind::Float, t_value};
+      return {TokenKind::Float, t_value, location};
     }
-    return {TokenKind::Integer, t_value};
+    return {TokenKind::Integer, t_value, location};
   };
   skipWs();
   skipComments();
   if (isEnd()) {
-    return {TokenKind::Eof, ""};
+    return {TokenKind::Eof, "", location};
   }
   switch (current()) {
   case '\n':
@@ -89,6 +89,10 @@ Token Lexer::getToken() noexcept {
     return createToken(TokenKind::LBrace);
   case '}':
     return createToken(TokenKind::RBrace);
+  case '*':
+    return createToken(TokenKind::Mul);
+  case ':':
+    return createToken(TokenKind::Colon);
   case '-':
     if (next() == '>') {
       move();

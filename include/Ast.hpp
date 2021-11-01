@@ -5,102 +5,119 @@
 #ifndef MINX_AST_HPP
 #define MINX_AST_HPP
 
-#include "Type.hpp"
-#include "Visitor.hpp"
+#include "Token.hpp"
+#include "VariantsAST.hpp"
+#include "FileLocation.hpp"
+#include "CodeGen.hpp"
+
 #include <memory>
+#include <cassert>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace minx {
 
-struct Node {
-  virtual ~Node() = default;
-  virtual void accept(Generator *) = 0;
+struct NodeAST {
+  FileLocation location{"(unknown)", 0, 0};
+
+  virtual void accept(CodeGen &) noexcept = 0;
+  virtual ~NodeAST() = default;
 };
 
-struct Expr : Node {
-  ~Expr() override = default;
-  void accept(Generator *) override {
-    assert(0 && "Null expr occured");
-  }
-};
-struct Stmt : Node {
-  ~Stmt() override = default;
-  void accept(Generator *) override {}
-};
-struct Decl : Stmt {
-  ~Decl() override = default;
-  void accept(Generator *) override {}
+struct TypeAST : NodeAST {
+  std::vector<Token> value;
+
+  void accept(CodeGen &gen) noexcept override { gen.visitType(*this); }
 };
 
-using DeclVector = std::vector<std::unique_ptr<Decl>>;
-using StmtVector = std::vector<std::unique_ptr<Stmt>>;
-
-struct VarDecl : Decl {
-  std::string name;
-  PrimitiveType type;
-  std::optional<std::unique_ptr<Expr>> value;
-
-  ~VarDecl() override = default;
-
-  void accept(Generator *gen) noexcept override {
-    gen->append("%%%s = alloca %s\n", name.c_str(), getLLVMType(type).data());
-    if (value) {
-      gen->append("store ");
-      auto tmp { gen->expectedType };
-      gen->expectedType = type;
-      value.value()->accept(gen);
-      gen->expectedType = tmp;
-      gen->append(", %s* %%%s\n", getLLVMType(type).data(), name.c_str());
-    }
-  }
-};
-
-struct FuncDecl : Decl {
-  std::string name;
-  PrimitiveType type;
-  StmtVector body;
-
-  ~FuncDecl() override = default;
-
-  void accept(Generator *gen) noexcept override {
-    gen->append("define %s @%s() {\n", getLLVMType(type).data(), name.c_str());
-    gen->expectedType = type;
-    for (auto &i : body) {
-      i->accept(gen);
-    }
-    gen->expectedType = PrimitiveType::Null;
-    gen->append("}\n");
-  }
-};
-
-struct IntLiteralExpr : Expr {
+struct IntegerLiteralAST : NodeAST {
   std::string value;
 
-  ~IntLiteralExpr() override = default;
-  void accept(Generator *gen) noexcept override {
-    gen->append("%s %s", getLLVMType(gen->expectedType).data(), value.c_str());
+  explicit IntegerLiteralAST(std::string_view t_value) noexcept : value(t_value) {}
+  void accept(CodeGen &gen) noexcept override { gen.visitIntegerLiteral(*this); }
+  static bool convertibleTo(std::string_view t_llvmtype) noexcept {
+    return t_llvmtype.starts_with('i'); 
+  } 
+};
+
+struct IdentifierAST : NodeAST {
+  std::string name;
+
+  explicit IdentifierAST(std::string_view t_name = "") noexcept : name(t_name) {}
+  void accept(CodeGen &gen) noexcept override { gen.visitIdentifier(*this); }
+
+  [[nodiscard]] auto operator<=>(const IdentifierAST &t_rhs) const noexcept {
+    return name <=> t_rhs.name;
   }
 };
 
-struct FloatLiteralExpr : Expr {
-  std::string value;
+struct RefExprAST : NodeAST {
+  IdentifierAST id;
 
-  ~FloatLiteralExpr() override = default;
-  void accept(Generator *gen) noexcept override {
-    gen->append("%s %s", getLLVMType(gen->expectedType).data(), value.c_str());
+  void accept(CodeGen &gen) noexcept override { gen.visitRefExpr(*this); }
+};
+
+
+struct ReturnStmtAST : NodeAST {
+  std::optional<IntegerLiteralAST> value;
+
+  void accept(CodeGen &gen) noexcept override { gen.visitReturnStmt(*this); }
+};
+
+struct VarDeclAST : NodeAST {
+  IdentifierAST id;
+  TypeAST type;
+  std::optional<IntegerLiteralAST> value;
+
+  explicit VarDeclAST() noexcept
+      : value{std::nullopt} {}
+  void accept(CodeGen &codeGen) noexcept override {
+    codeGen.visitVarDecl(*this);
   }
 };
 
-struct ReturnStmt : Stmt {
-  std::unique_ptr<Expr> value;
+struct StatementVisitor {
+  void operator()(std::monostate) {}
+  void operator()(ReturnStmtAST &stmt) const noexcept { stmt.accept(codeGen); }
+  void operator()(VarDeclAST &decl) const noexcept { decl.accept(codeGen); }
 
-  ~ReturnStmt() override = default;
-  void accept(Generator *gen) noexcept override {
-    gen->append("ret ");
-    value->accept(gen);
-    gen->append("\n");
+  CodeGen &codeGen;
+};
+
+struct CompoundStmtAST : NodeAST {
+  std::vector<StatementAST> statements;
+
+  void accept(CodeGen &codeGen) noexcept override {
+    codeGen.visitCompoundStmt(*this);
+    for (auto &i : statements) {
+      std::visit(StatementVisitor{codeGen}, i);
+    }
+    codeGen.emitDefineBodyEnd();
+  }
+};
+
+struct FuncDeclAST : NodeAST {
+  IdentifierAST id;
+  TypeAST returnType;
+  CompoundStmtAST body;
+
+  void accept(CodeGen &codeGen) noexcept override {
+    codeGen.visitFuncDecl(*this);
+    body.accept(codeGen);
+  }
+};
+
+
+struct TranslationUnitAST : NodeAST {
+  std::vector<FuncDeclAST> funcDecls;
+
+  void accept(CodeGen &codeGen) noexcept override {
+    codeGen.visitTranslationUnit(*this);
+    for (auto &i : funcDecls) {
+      i.accept(codeGen);
+    }
   }
 };
 

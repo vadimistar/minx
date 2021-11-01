@@ -32,7 +32,7 @@ public:
   Lexer &move() noexcept;
 
   template <typename Pred> requires std::predicate<Pred>
-  Lexer& moveWhile(Pred t_predicate) noexcept {
+  Lexer& moveWhile(const Pred &t_predicate) noexcept {
     while (!isEnd() && t_predicate()) {
       move();
     }

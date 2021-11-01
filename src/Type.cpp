@@ -3,30 +3,44 @@
 //
 
 #include "../include/Type.hpp"
+#include "../include/Ast.hpp"
 #include <cassert>
 
 namespace minx {
-PrimitiveType getPrimitiveType(std::string_view t_val) {
-  if (t_val == "void") {
-    return PrimitiveType::Void;
-  } else if (t_val == "bool") {
-    return PrimitiveType::Bool;
-  } else if (t_val == "int32") {
-    return PrimitiveType::Int32;
-  }
-  return PrimitiveType::Null;
-}
-std::string_view getLLVMType(PrimitiveType t_type) {
-  assert(t_type != PrimitiveType::Null && "Null type can't be converted to LLVM type");
-  switch (t_type) {
-  case PrimitiveType::Void:
-    return "void";
-  case PrimitiveType::Bool:
+std::optional<std::string_view> getPrimitiveLLVMType(std::string_view t_minx_primitive) {
+  if (t_minx_primitive == "bool") {
     return "i1";
-  case PrimitiveType::Int32:
-    return "i32";
-  default:
-    assert(0 && "this type is not handled");
   }
+  if (t_minx_primitive == "int8" ) {
+    return "i8";
+  }
+  if (t_minx_primitive == "int32") {
+    return "i32";
+  }
+  return std::nullopt;
 }
+
+std::string getLLVMType(const TypeAST &type) {
+  std::string res {};
+  for (auto i { type.value.rbegin() }; i != type.value.rend(); ++i) {
+    switch (i->kind) {
+      case TokenKind::Mul:
+        res += '*';
+        break;
+      case TokenKind::Word: {
+        auto prim = getPrimitiveLLVMType(i->value);
+        if (!prim) {
+          logError(i->location, "Expected valid primitive data type, but got %s", i->value.c_str());
+          exit(1);
+        }
+        res += prim.value();
+        } 
+        break;
+      default:
+        assert(false && "the conversion of this token kind is not implemented");  
+    }
+  }
+  return res;
+}
+
 }
