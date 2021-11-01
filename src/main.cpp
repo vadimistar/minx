@@ -52,17 +52,17 @@ int main(int argc, char **argv) {
   //for (auto &i: unit) {
   //  i->accept(gen.get());
   //}
-  /*std::string newFileName { argv[1] };
+  std::string newFileName { argv[1] };
   newFileName.erase(newFileName.size() - 5);
   constexpr auto maxBuff = 256u;
   char buff[maxBuff];
   sprintf(buff, "%s.ll", newFileName.c_str());
-  writeFile(buff, gen);
+  writeFile(buff, gen.data);
   sprintf(buff, "llvm-as %s.ll -o %s.bc; "
                 "llc -filetype=obj %s.bc; "
                 "gcc -no-pie %s.o -o %s;"
                 "rm %s.o; rm %s.bc", newFileName.c_str(),
           newFileName.c_str(), newFileName.c_str(), newFileName.c_str(),
           newFileName.c_str(), newFileName.c_str(), newFileName.c_str());
-  system(buff);*/
+  system(buff);
 }
