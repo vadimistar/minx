@@ -5,16 +5,13 @@
 #ifndef MINX_TYPE_HPP
 #define MINX_TYPE_HPP
 
+#include "Ast.hpp"
 #include <string_view>
 
 namespace minx {
 
-enum struct PrimitiveType {
-  Null, Void, Bool, Int32,
-};
-
-PrimitiveType getPrimitiveType(std::string_view t_val);
-std::string_view getLLVMType(PrimitiveType t_type);
+std::string getLLVMType(const TypeAST &);
+std::optional<std::string_view> getPrimitiveLLVMType(std::string_view t_minx_primitive);
 
 }
 

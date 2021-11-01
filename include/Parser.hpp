@@ -76,12 +76,12 @@ public:
 
   IdentifierAST parseIdentifier() noexcept;
   TypeAST parseType() noexcept;
-  PrimitiveTypeAST parsePrimitiveType() noexcept;
   IntegerLiteralAST parseIntegerLiteral() noexcept;
   StatementAST parseReturnStmt() noexcept;
   StatementAST parseStatement() noexcept;
-  CompoundStmt parseCompoundStmt() noexcept;
+  CompoundStmtAST parseCompoundStmt() noexcept;
   FuncDeclAST parseFuncDecl() noexcept;
+  VarDeclAST parseVarDecl() noexcept;
   TranslationUnitAST parseTranslationUnit() noexcept;
 };
 } // namespace minx

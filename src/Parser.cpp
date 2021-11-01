@@ -8,51 +8,55 @@
 
 namespace minx {
 
+  // TODO: ast nodes don't hold their location
+
 IdentifierAST Parser::parseIdentifier() noexcept {
+  auto val = current().value;
   if (current().kind != TokenKind::Word) {
     logError(location(), "Can't create identifier from a %s",
              tokenKindAsStr(current().kind).data());
     exit(1);
   }
   move();
-  return {IdentifierAST{.name = current().value}};
+  return IdentifierAST {val};
 }
 
 TypeAST Parser::parseType() noexcept {
-  return parsePrimitiveType();
-}
-
-PrimitiveTypeAST Parser::parsePrimitiveType() noexcept {
-  if (current().kind != TokenKind::Word) {
-    logError(location(), "Expected valid data type, but got %s", tokenKindAsStr(current().kind).data());
-    exit(1);
+  TypeAST res{};
+  while (current().kind != TokenKind::Word) {
+    switch (current().kind) {
+      case TokenKind::Mul: 
+        res.value.emplace_back(current());
+        break;
+      default:
+        logError(location(), "Expected valid data type, but got %s", tokenKindAsStr(current().kind).data());
+        exit(1);
+    }
+    move();
   }
-  auto ret{PrimitiveTypeAST{.type = getPrimitiveType(current().value)}};
-  if (ret.type == PrimitiveType::Null) {
-    logError(location(), "Invalid data type: %s", current().value.c_str());
-    exit(1);
-  }
+  res.value.emplace_back(current());
   move();
-  return ret;
+  return res;
 }
 
 IntegerLiteralAST Parser::parseIntegerLiteral() noexcept {
-  auto ret { IntegerLiteralAST {current().value} };
+  IntegerLiteralAST ret{current().value};
   match(TokenKind::Integer);
   return ret;
 }
 
 StatementAST Parser::parseReturnStmt() noexcept {
   matchKeyword("return");
-  auto ret { ReturnStmt { std::nullopt } };
+  auto ret { ReturnStmtAST {} };
   switch (current().kind) {
   case TokenKind::Semicolon:
+    ret.value = std::nullopt;
     break;
   case TokenKind::Integer:
     ret.value = parseIntegerLiteral();
     break;
   default:
-    logError(location(), "Unknown expression in the return statement");
+    logError(location(), "%s", "Unknown expression in the return statement");
     exit(1);
   }
   match(TokenKind::Semicolon);
@@ -63,21 +67,25 @@ StatementAST Parser::parseStatement() noexcept {
   auto stmt { StatementAST{} };
   switch (current().kind) {
   case TokenKind::Word:
-    stmt = parseReturnStmt();
+    if (current().value == "return") {
+      stmt = parseReturnStmt();
+    } else if (current().value == "var") {
+      stmt = parseVarDecl();
+    }
     break;
   case TokenKind::Semicolon:
     move();
     break;
   default:
-    logError(location(), "Unknown statement");
+    logError(location(), "%s", "Unknown statement");
     exit(1);
   }
   return stmt;
 }
 
-CompoundStmt Parser::parseCompoundStmt() noexcept {
+CompoundStmtAST Parser::parseCompoundStmt() noexcept {
   match(TokenKind::LBrace);
-  auto res { CompoundStmt {} };
+  auto res { CompoundStmtAST {} };
   while (current().kind != TokenKind::RBrace) {
     res.statements.emplace_back(parseStatement());
   }
@@ -87,9 +95,7 @@ CompoundStmt Parser::parseCompoundStmt() noexcept {
 
 FuncDeclAST Parser::parseFuncDecl() noexcept {
   matchKeyword("func");
-  auto res {
-      FuncDeclAST {}
-  };
+  FuncDeclAST res;
   res.id = parseIdentifier();
   match(TokenKind::LParen);
   match(TokenKind::RParen);
@@ -104,6 +110,19 @@ TranslationUnitAST Parser::parseTranslationUnit() noexcept {
   while (current().kind != TokenKind::Eof) {
     res.funcDecls.emplace_back(parseFuncDecl());
   }
+  return res;
+}
+VarDeclAST Parser::parseVarDecl() noexcept {
+  matchKeyword("var");
+  VarDeclAST res;
+  res.id = parseIdentifier();
+  match(TokenKind::Colon);
+  res.type = parseType();
+  if (current().kind == TokenKind::Assign) {
+    move();
+    res.value = parseIntegerLiteral();
+  }
+  match(TokenKind::Semicolon);
   return res;
 }
 

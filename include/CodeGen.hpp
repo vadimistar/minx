@@ -8,9 +8,12 @@
 #include "Visitor.hpp"
 
 #include <vector>
+#include <memory>
 #include <string>
 
 namespace minx {
+
+struct Scope;
 
 struct CodeGen : Visitor {
   std::vector<std::string> data { {""} };
@@ -37,6 +40,11 @@ struct CodeGen : Visitor {
   void emitLocalLabel(std::string_view t_name) {
     curr().append("%");
     curr().append(t_name);
+  }
+
+  void emitLocalLabelPrev(std::string_view t_name) {
+    prev().append("%");
+    prev().append(t_name);
   }
 
   void emitDefineHeader(std::string_view t_type, std::string_view t_name) {
@@ -77,15 +85,14 @@ struct CodeGen : Visitor {
     next();
   }
 
-  void emitLoad(std::string_view t_name, std::string_view t_type, std::string_view t_src) {
+  void emitLoadPrev(std::string_view t_name, std::string_view t_type, std::string_view t_src) {
     emitLocalLabel(t_name);
-    curr().append(" = load ");
-    curr().append(t_type);
-    curr().append(", ");
-    curr().append(t_type);
-    curr().append("* ");
+    prev().append(" = load ");
+    prev().append(t_type);
+    prev().append(", ");
+    prev().append(t_type);
+    prev().append("* ");
     emitLocalLabel(t_src);
-    next();
   }
 
   void emitStore(std::string_view t_type, std::string_view t_src, std::string_view t_dst) {
@@ -100,12 +107,18 @@ struct CodeGen : Visitor {
     next();
   }
 
+  [[nodiscard]] std::string getTempLocal() const noexcept {
+    return "temp." + std::to_string(opId);
+  }
+
   std::string defineRetType;
+  std::uint64_t opId {0};
+  Scope *scope{};
+
+  CodeGen() noexcept;
 
   void visitIdentifier(IdentifierAST &) noexcept override {}
   void visitType(TypeAST &t) noexcept override;
-  void visitPrimitiveType(PrimitiveTypeAST &) noexcept override {}
-  void visitPointerType(PointerTypeAST &) noexcept override {}
   void visitIntegerLiteral(IntegerLiteralAST &) noexcept override {}
   void visitStatement(StatementAST &) noexcept override {}
   void visitReturnStmt(ReturnStmtAST &) noexcept override;
@@ -115,6 +128,7 @@ struct CodeGen : Visitor {
   void visitFuncDecl(FuncDeclAST &) noexcept override;
   void visitVarDecl(VarDeclAST &) noexcept override;
   void visitTranslationUnit(TranslationUnitAST &) noexcept override {}
+  void visitRefExpr(RefExprAST &) noexcept override;
 };
 
 } // namespace minx
