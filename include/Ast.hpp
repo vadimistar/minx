@@ -9,6 +9,7 @@
 #include "VariantsAST.hpp"
 #include "FileLocation.hpp"
 #include "CodeGen.hpp"
+#include "ScopeCreator.hpp"
 
 #include <memory>
 #include <cassert>
@@ -23,6 +24,7 @@ struct NodeAST {
   FileLocation location{"(unknown)", 0, 0};
 
   virtual void accept(CodeGen &) noexcept = 0;
+  virtual void accept(ScopeCreator &) noexcept = 0;
   virtual ~NodeAST() = default;
 };
 
@@ -30,6 +32,7 @@ struct TypeAST : NodeAST {
   std::vector<Token> value;
 
   void accept(CodeGen &gen) noexcept override { gen.visitType(*this); }
+  void accept(ScopeCreator &gen) noexcept override { gen.visitType(*this); }
 };
 
 struct IntegerLiteralAST : NodeAST {
@@ -37,6 +40,7 @@ struct IntegerLiteralAST : NodeAST {
 
   explicit IntegerLiteralAST(std::string_view t_value) noexcept : value(t_value) {}
   void accept(CodeGen &gen) noexcept override { gen.visitIntegerLiteral(*this); }
+  void accept(ScopeCreator &gen) noexcept override { gen.visitIntegerLiteral(*this); }
   static bool convertibleTo(std::string_view t_llvmtype) noexcept {
     return t_llvmtype.starts_with('i'); 
   } 
@@ -47,6 +51,7 @@ struct IdentifierAST : NodeAST {
 
   explicit IdentifierAST(std::string_view t_name = "") noexcept : name(t_name) {}
   void accept(CodeGen &gen) noexcept override { gen.visitIdentifier(*this); }
+  void accept(ScopeCreator &gen) noexcept override { gen.visitIdentifier(*this); }
 
   [[nodiscard]] auto operator<=>(const IdentifierAST &t_rhs) const noexcept {
     return name <=> t_rhs.name;
@@ -59,12 +64,14 @@ struct RefExprAST : NodeAST {
   explicit RefExprAST(const IdentifierAST &t_id) noexcept : id(t_id) {}
 
   void accept(CodeGen &gen) noexcept override { gen.visitRefExpr(*this); }
+  void accept(ScopeCreator &gen) noexcept override { gen.visitRefExpr(*this); }
 };
 
 struct ReturnStmtAST : NodeAST {
   std::optional<ExprAST> value;
 
   void accept(CodeGen &gen) noexcept override { gen.visitReturnStmt(*this); }
+  void accept(ScopeCreator &gen) noexcept override { gen.visitReturnStmt(*this); }
 };
 
 struct VarDeclAST : NodeAST {
@@ -77,14 +84,16 @@ struct VarDeclAST : NodeAST {
   void accept(CodeGen &codeGen) noexcept override {
     codeGen.visitVarDecl(*this);
   }
+  void accept(ScopeCreator &vis) noexcept override { vis.visitVarDecl(*this); }
 };
 
+template <typename Visitor>
 struct StatementVisitor {
   void operator()(std::monostate) {}
-  void operator()(ReturnStmtAST &stmt) const noexcept { stmt.accept(codeGen); }
-  void operator()(VarDeclAST &decl) const noexcept { decl.accept(codeGen); }
+  void operator()(ReturnStmtAST &stmt) const noexcept { stmt.accept(vis); }
+  void operator()(VarDeclAST &decl) const noexcept { decl.accept(vis); }
 
-  CodeGen &codeGen;
+  Visitor &vis;
 };
 
 struct CompoundStmtAST : NodeAST {
@@ -93,9 +102,16 @@ struct CompoundStmtAST : NodeAST {
   void accept(CodeGen &codeGen) noexcept override {
     codeGen.visitCompoundStmt(*this);
     for (auto &i : statements) {
-      std::visit(StatementVisitor{codeGen}, i);
+      std::visit(StatementVisitor<CodeGen>{codeGen}, i);
     }
     codeGen.emitDefineBodyEnd();
+  }
+
+  void accept(ScopeCreator &vis) noexcept override {
+    vis.visitCompoundStmt(*this);
+    for (auto &i: statements) {
+      std::visit(StatementVisitor<ScopeCreator>{vis}, i);
+    }
   }
 };
 
