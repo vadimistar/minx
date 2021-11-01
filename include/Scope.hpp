@@ -11,13 +11,18 @@
 namespace minx {
 
 struct Scope {
-  std::map<IdentifierAST, TypeAST> data;
+  struct IdAttr {
+    bool callable { false };  
+    TypeAST type;
+  };
+
+  std::map<IdentifierAST, IdAttr> data;
   Scope *prev;
 
   explicit Scope(Scope *t_prev = nullptr) noexcept : prev(t_prev) {}
 
-  Scope &add(const IdentifierAST &t_id, const TypeAST &t_type) noexcept;
-  std::optional<TypeAST> getType(const IdentifierAST &t_id) noexcept;
+  Scope &add(const IdentifierAST &t_id, bool t_is_callee, const TypeAST &t_type) noexcept;
+  std::optional<IdAttr> get(const IdentifierAST &t_id) noexcept;
 };
 
 }
