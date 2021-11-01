@@ -65,12 +65,10 @@ struct CodeGen : Visitor {
     next();
   }
 
-  void emitReturn(std::string_view t_type, std::string_view t_value) {
+  void emitReturn(std::string_view t_type) {
     curr().append("ret ");
     curr().append(t_type);
     curr().append(" ");
-    curr().append(t_value);
-    next();
   }
 
   void emitReturn() {
@@ -86,20 +84,22 @@ struct CodeGen : Visitor {
   }
 
   void emitLoadPrev(std::string_view t_name, std::string_view t_type, std::string_view t_src) {
-    emitLocalLabel(t_name);
+    emitLocalLabelPrev(t_name);
     prev().append(" = load ");
     prev().append(t_type);
     prev().append(", ");
     prev().append(t_type);
     prev().append("* ");
-    emitLocalLabel(t_src);
+    emitLocalLabelPrev(t_src);
   }
 
-  void emitStore(std::string_view t_type, std::string_view t_src, std::string_view t_dst) {
+  void emitStoreBegin(std::string_view t_type) {
     curr().append("store ");
     curr().append(t_type);
     curr().append(" ");
-    curr().append(t_src);
+  }
+
+  void emitStoreEnd(std::string_view t_type, std::string_view t_dst) {
     curr().append(", ");
     curr().append(t_type);
     curr().append("* ");
@@ -119,7 +119,6 @@ struct CodeGen : Visitor {
 
   void visitIdentifier(IdentifierAST &) noexcept override {}
   void visitType(TypeAST &t) noexcept override;
-  void visitIntegerLiteral(IntegerLiteralAST &) noexcept override {}
   void visitStatement(StatementAST &) noexcept override {}
   void visitReturnStmt(ReturnStmtAST &) noexcept override;
   void visitCompoundStmt(CompoundStmtAST &) noexcept override {
@@ -128,7 +127,9 @@ struct CodeGen : Visitor {
   void visitFuncDecl(FuncDeclAST &) noexcept override;
   void visitVarDecl(VarDeclAST &) noexcept override;
   void visitTranslationUnit(TranslationUnitAST &) noexcept override {}
+  void visitExpr(ExprAST &) noexcept override;
   void visitRefExpr(RefExprAST &) noexcept override;
+  void visitIntegerLiteral(IntegerLiteralAST &lit) noexcept override;
 };
 
 } // namespace minx

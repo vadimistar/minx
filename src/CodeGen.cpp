@@ -20,7 +20,9 @@ void CodeGen::visitFuncDecl(FuncDeclAST &funcDecl) noexcept {
 
 void CodeGen::visitReturnStmt(ReturnStmtAST & stmt) noexcept {
   if (stmt.value && IntegerLiteralAST::convertibleTo(defineRetType)) {
-    emitReturn(defineRetType, stmt.value->value);
+    emitReturn(defineRetType);
+    visitExpr(stmt.value.value());
+    next();
   } else if (stmt.value) {
     assert(false && "define ret type and ret value don't match");
   } else {
@@ -36,11 +38,24 @@ void CodeGen::visitVarDecl(VarDeclAST &decl) noexcept {
   const auto llvmType = getLLVMType(decl.type);
   scope->add(decl.id, decl.type);
   emitAlloca(decl.id.name,llvmType);
-  if (decl.value && IntegerLiteralAST::convertibleTo(llvmType)) {
-    emitStore(llvmType, decl.value->value, decl.id.name);
+  if (decl.value) {
+    emitStoreBegin(llvmType);
+    visitExpr(decl.value.value()); 
+    emitStoreEnd(llvmType, decl.id.name);
   } else if (decl.value) {
     assert(false && "var type and expr type don't match");
   }
+}
+  
+void CodeGen::visitExpr(ExprAST &t_expr) noexcept {
+  struct ExprVisitor {
+    void operator()(IntegerLiteralAST &expr) const noexcept { expr.accept(codeGen); }  
+    void operator()(RefExprAST &expr) const noexcept { expr.accept(codeGen); }  
+
+    CodeGen &codeGen;
+  };
+
+  std::visit(ExprVisitor{*this}, t_expr);
 }
 
 void CodeGen::visitRefExpr(RefExprAST &expr) noexcept {
@@ -50,8 +65,12 @@ void CodeGen::visitRefExpr(RefExprAST &expr) noexcept {
     exit(1);
   }
   data.insert(data.end() - 1, "");
-  emitLoadPrev(getTempLocal(), getLLVMType(t_type.value()), "%" + expr.id.name); 
+  emitLoadPrev(getTempLocal(), getLLVMType(t_type.value()), expr.id.name); 
+  emitLocalLabel(getTempLocal());
   ++opId; // TODO: introduce better interface for this
 }
 
+void CodeGen::visitIntegerLiteral(IntegerLiteralAST &lit) noexcept {
+  curr().append(lit.value);
+}
 }

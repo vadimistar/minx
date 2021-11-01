@@ -52,12 +52,8 @@ StatementAST Parser::parseReturnStmt() noexcept {
   case TokenKind::Semicolon:
     ret.value = std::nullopt;
     break;
-  case TokenKind::Integer:
-    ret.value = parseIntegerLiteral();
-    break;
   default:
-    logError(location(), "%s", "Unknown expression in the return statement");
-    exit(1);
+    ret.value = parseExpr();
   }
   match(TokenKind::Semicolon);
   return ret;
@@ -120,10 +116,26 @@ VarDeclAST Parser::parseVarDecl() noexcept {
   res.type = parseType();
   if (current().kind == TokenKind::Assign) {
     move();
-    res.value = parseIntegerLiteral();
+    res.value = parseExpr();
   }
   match(TokenKind::Semicolon);
   return res;
+}
+
+ExprAST Parser::parseExpr() noexcept {
+  switch (current().kind) {
+    case TokenKind::Integer:
+      return parseIntegerLiteral();
+    case TokenKind::Word:
+      return parseRefExpr();
+    default:
+      logError(location(), "Unknown expression: %s", tokenKindAsStr(current().kind).data());
+      exit(1);
+  }
+}
+
+RefExprAST Parser::parseRefExpr() noexcept {
+  return RefExprAST {parseIdentifier()};
 }
 
 } // namespace minx

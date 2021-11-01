@@ -30,6 +30,7 @@ struct Visitor {
   virtual void visitFuncDecl(FuncDeclAST &) noexcept = 0;
   virtual void visitVarDecl(VarDeclAST &) noexcept = 0;
   virtual void visitTranslationUnit(TranslationUnitAST &) noexcept = 0;
+  virtual void visitExpr(ExprAST &) noexcept = 0;
   virtual void visitRefExpr(RefExprAST &) noexcept = 0;
 };
 

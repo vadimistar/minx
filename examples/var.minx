@@ -1,4 +1,4 @@
 func main() -> int32 {
     var a: int32 = 10;
-    return 0;
+    return a;
 }

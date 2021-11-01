@@ -56,12 +56,13 @@ struct IdentifierAST : NodeAST {
 struct RefExprAST : NodeAST {
   IdentifierAST id;
 
+  explicit RefExprAST(const IdentifierAST &t_id) noexcept : id(t_id) {}
+
   void accept(CodeGen &gen) noexcept override { gen.visitRefExpr(*this); }
 };
 
-
 struct ReturnStmtAST : NodeAST {
-  std::optional<IntegerLiteralAST> value;
+  std::optional<ExprAST> value;
 
   void accept(CodeGen &gen) noexcept override { gen.visitReturnStmt(*this); }
 };
@@ -69,7 +70,7 @@ struct ReturnStmtAST : NodeAST {
 struct VarDeclAST : NodeAST {
   IdentifierAST id;
   TypeAST type;
-  std::optional<IntegerLiteralAST> value;
+  std::optional<ExprAST> value;
 
   explicit VarDeclAST() noexcept
       : value{std::nullopt} {}

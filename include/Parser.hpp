@@ -83,6 +83,8 @@ public:
   FuncDeclAST parseFuncDecl() noexcept;
   VarDeclAST parseVarDecl() noexcept;
   TranslationUnitAST parseTranslationUnit() noexcept;
+  ExprAST parseExpr() noexcept;
+  RefExprAST parseRefExpr() noexcept;
 };
 } // namespace minx
 
