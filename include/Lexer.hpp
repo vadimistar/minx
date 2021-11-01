@@ -22,7 +22,7 @@ public:
 
   [[nodiscard]] auto current() const noexcept { return *m_curr; }
   [[nodiscard]] auto next() const noexcept { return *m_next; }
-  [[nodiscard]] auto isEnd() const noexcept { return m_next == m_data.end(); }
+  [[nodiscard]] bool isEnd() const noexcept { return m_next == m_data.end(); }
 
   Lexer(std::string_view t_filename, std::string_view t_data) noexcept
       : m_data(t_data), m_curr(m_data.begin()),
