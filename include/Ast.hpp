@@ -104,7 +104,7 @@ struct CompoundStmtAST : NodeAST {
     for (auto &i : statements) {
       std::visit(StatementVisitor<CodeGen>{codeGen}, i);
     }
-    codeGen.emitDefineBodyEnd();
+    codeGen.visitCompoundStmtExit(*this);
   }
 
   void accept(ScopeCreator &vis) noexcept override {
@@ -112,6 +112,7 @@ struct CompoundStmtAST : NodeAST {
     for (auto &i: statements) {
       std::visit(StatementVisitor<ScopeCreator>{vis}, i);
     }
+    vis.visitCompoundStmtExit(*this);
   }
 };
 
@@ -124,6 +125,11 @@ struct FuncDeclAST : NodeAST {
     codeGen.visitFuncDecl(*this);
     body.accept(codeGen);
   }
+
+  void accept(ScopeCreator &vis) noexcept override {
+    vis.visitFuncDecl(*this);     
+    body.accept(vis);
+  }
 };
 
 
@@ -135,6 +141,13 @@ struct TranslationUnitAST : NodeAST {
     for (auto &i : funcDecls) {
       i.accept(codeGen);
     }
+    codeGen.visitTranslationUnitExit(*this);
+  }
+
+  void accept(ScopeCreator &vis) noexcept override {
+    vis.visitTranslationUnit(*this);     
+    for (auto &i : funcDecls) { i.accept(vis); }
+    vis.visitTranslationUnitExit(*this);     
   }
 };
 

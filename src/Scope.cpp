@@ -3,6 +3,7 @@
 //
 
 #include "Scope.hpp"
+
 minx::Scope &minx::Scope::add(const minx::IdentifierAST &t_id,
                               bool t_is_callee,
                               const minx::TypeAST &t_type) noexcept {

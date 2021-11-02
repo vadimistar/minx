@@ -8,18 +8,22 @@
 #include "../include/Scope.hpp"
 
 namespace minx {
-CodeGen::CodeGen() noexcept {
-  scope = std::make_unique<Scope>().get(); 
+
+void CodeGen::visitTranslationUnit(TranslationUnitAST &) noexcept {
+
+}
+
+void CodeGen::visitTranslationUnitExit(TranslationUnitAST &) noexcept {
+   
 }
 
 void CodeGen::visitFuncDecl(FuncDeclAST &funcDecl) noexcept {
   defineRetType = getLLVMType(funcDecl.returnType);
   emitDefineHeader(defineRetType, funcDecl.id.name);
-  scope = std::make_unique<Scope>(scope).get();
 }
 
 void CodeGen::visitReturnStmt(ReturnStmtAST & stmt) noexcept {
-  if (stmt.value && IntegerLiteralAST::convertibleTo(defineRetType)) {
+  if (stmt.value) {
     emitReturn(defineRetType);
     visitExpr(stmt.value.value());
     next();
@@ -36,7 +40,7 @@ void CodeGen::visitType(TypeAST &t) noexcept {
 
 void CodeGen::visitVarDecl(VarDeclAST &decl) noexcept {
   const auto llvmType = getLLVMType(decl.type);
-  scope->add(decl.id, decl.type);
+  scope->add(decl.id, false, decl.type);
   emitAlloca(decl.id.name,llvmType);
   if (decl.value) {
     emitStoreBegin(llvmType);
@@ -59,13 +63,13 @@ void CodeGen::visitExpr(ExprAST &t_expr) noexcept {
 }
 
 void CodeGen::visitRefExpr(RefExprAST &expr) noexcept {
-  auto t_type { scope->getType(expr.id) };
+  auto t_type { scope->get(expr.id) };
   if (!t_type) {
     logError(expr.location, "Unknown identifier: %s", expr.id.name.c_str());
     exit(1);
   }
   data.insert(data.end() - 1, "");
-  emitLoadPrev(getTempLocal(), getLLVMType(t_type.value()), expr.id.name); 
+  emitLoadPrev(getTempLocal(), getLLVMType(t_type->type), expr.id.name); 
   emitLocalLabel(getTempLocal());
   ++opId; // TODO: introduce better interface for this
 }
@@ -73,4 +77,18 @@ void CodeGen::visitRefExpr(RefExprAST &expr) noexcept {
 void CodeGen::visitIntegerLiteral(IntegerLiteralAST &lit) noexcept {
   curr().append(lit.value);
 }
+  
+void CodeGen::visitCompoundStmt(CompoundStmtAST &) noexcept {
+  emitDefineBodyBegin(); 
+  scope = new Scope(scope);
+}
+
+void CodeGen::visitCompoundStmtExit(CompoundStmtAST &) noexcept {
+  auto *curr { scope };
+  scope = scope->prev; 
+  delete curr;
+  emitDefineBodyEnd();
+}
+
+
 }

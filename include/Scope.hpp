@@ -17,9 +17,10 @@ struct Scope {
   };
 
   std::map<IdentifierAST, IdAttr> data;
-  Scope *prev;
+  Scope *prev{nullptr};
 
-  explicit Scope(Scope *t_prev = nullptr) noexcept : prev(t_prev) {}
+  explicit Scope() noexcept = default;
+  explicit Scope(Scope *t_scope) noexcept : prev(t_scope) {}
 
   Scope &add(const IdentifierAST &t_id, bool t_is_callee, const TypeAST &t_type) noexcept;
   std::optional<IdAttr> get(const IdentifierAST &t_id) noexcept;

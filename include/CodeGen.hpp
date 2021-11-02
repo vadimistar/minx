@@ -113,23 +113,23 @@ struct CodeGen : Visitor {
 
   std::string defineRetType;
   std::uint64_t opId {0};
-  Scope *scope{};
-
-  CodeGen() noexcept;
+  Scope *scope{nullptr};
 
   void visitIdentifier(IdentifierAST &) noexcept override {}
   void visitType(TypeAST &t) noexcept override;
   void visitStatement(StatementAST &) noexcept override {}
   void visitReturnStmt(ReturnStmtAST &) noexcept override;
-  void visitCompoundStmt(CompoundStmtAST &) noexcept override {
-    emitDefineBodyBegin();
-  }
+  void visitCompoundStmt(CompoundStmtAST &) noexcept override;
+  void visitCompoundStmtExit(CompoundStmtAST &) noexcept;
   void visitFuncDecl(FuncDeclAST &) noexcept override;
   void visitVarDecl(VarDeclAST &) noexcept override;
-  void visitTranslationUnit(TranslationUnitAST &) noexcept override {}
+  void visitTranslationUnit(TranslationUnitAST &) noexcept override;
+  void visitTranslationUnitExit(TranslationUnitAST &) noexcept;
   void visitExpr(ExprAST &) noexcept override;
   void visitRefExpr(RefExprAST &) noexcept override;
   void visitIntegerLiteral(IntegerLiteralAST &lit) noexcept override;
+
+  ~CodeGen() override = default;
 };
 
 } // namespace minx

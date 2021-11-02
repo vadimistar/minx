@@ -1,6 +1,7 @@
 #include "../include/Io.hpp"
 #include "../include/Lexer.hpp"
 #include "../include/CodeGen.hpp"
+#include "../include/ScopeCreator.hpp"
 #include <Parser.hpp>
 #include <cassert>
 #include <iostream>
@@ -41,6 +42,8 @@ int main(int argc, char **argv) {
   Lexer lexer(argv[1], fileData.value());
   Parser parser(lexer);
   auto unit = parser.parseTranslationUnit();
+  ScopeCreator creator;
+  unit.accept(creator);
   CodeGen gen;
   unit.accept(gen);
 

@@ -14,8 +14,14 @@ std::optional<std::string_view> getPrimitiveLLVMType(std::string_view t_minx_pri
   if (t_minx_primitive == "int8" ) {
     return "i8";
   }
+  if (t_minx_primitive == "int16") {
+    return "i16";
+  }
   if (t_minx_primitive == "int32") {
     return "i32";
+  }
+  if (t_minx_primitive == "int64") {
+    return "i64";
   }
   return std::nullopt;
 }
