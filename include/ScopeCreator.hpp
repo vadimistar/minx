@@ -1,5 +1,5 @@
-#ifndef MINX_TYPEVALIDATOR_HPP
-#define MINX_TYPEVALIDATOR_HPP
+#ifndef MINX_SCOPECREATOR_HPP
+#define MINX_SCOPECREATOR_HPP
 
 #include "Visitor.hpp"
 
@@ -29,4 +29,4 @@ struct ScopeCreator : Visitor {
 } // namespace minx
 
 
-#endif//MINX_TYPEVALIDATOR_HPP
+#endif//MINX_SCOPECREATOR_HPP

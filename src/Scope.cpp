@@ -2,7 +2,7 @@
 // Created by vadi on 10/31/21.
 //
 
-#include "Scope.hpp"
+#include "../include/Scope.hpp"
 
 minx::Scope &minx::Scope::add(const minx::IdentifierAST &t_id,
                               bool t_is_callee,

@@ -2,7 +2,7 @@
 #include "../include/Lexer.hpp"
 #include "../include/CodeGen.hpp"
 #include "../include/ScopeCreator.hpp"
-#include <Parser.hpp>
+#include "../include/Parser.hpp"
 #include <cassert>
 #include <iostream>
 

@@ -2,7 +2,7 @@
 // Created by vadi on 10/21/21.
 //
 
-#include "Lexer.hpp"
+#include "../include/Lexer.hpp"
 
 namespace minx {
 Lexer &Lexer::move() noexcept {
